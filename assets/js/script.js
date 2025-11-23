@@ -1,0 +1,338 @@
+"use strict";
+
+// element toggle function
+const elementToggleFunc = function (elem) {
+  elem.classList.toggle("active");
+};
+
+// sidebar variables
+const sidebar = document.querySelector("[data-sidebar]");
+const sidebarBtn = document.querySelector("[data-sidebar-btn]");
+
+// sidebar toggle functionality for mobile
+sidebarBtn.addEventListener("click", function () {
+  elementToggleFunc(sidebar);
+});
+
+// testimonials variables
+const testimonialsItem = document.querySelectorAll("[data-testimonials-item]");
+const modalContainer = document.querySelector("[data-modal-container]");
+const modalCloseBtn = document.querySelector("[data-modal-close-btn]");
+const overlay = document.querySelector("[data-overlay]");
+
+// modal variable
+const modalImg = document.querySelector("[data-modal-img]");
+const modalTitle = document.querySelector("[data-modal-title]");
+const modalText = document.querySelector("[data-modal-text]");
+
+// modal toggle function
+const testimonialsModalFunc = function () {
+  modalContainer.classList.toggle("active");
+  overlay.classList.toggle("active");
+};
+
+// add click event to all modal items
+for (let i = 0; i < testimonialsItem.length; i++) {
+  testimonialsItem[i].addEventListener("click", function () {
+    modalImg.src = this.querySelector("[data-testimonials-avatar]").src;
+    modalImg.alt = this.querySelector("[data-testimonials-avatar]").alt;
+    modalTitle.innerHTML = this.querySelector(
+      "[data-testimonials-title]"
+    ).innerHTML;
+    modalText.innerHTML = this.querySelector(
+      "[data-testimonials-text]"
+    ).innerHTML;
+
+    testimonialsModalFunc();
+  });
+}
+
+// add click event to modal close button
+modalCloseBtn.addEventListener("click", testimonialsModalFunc);
+overlay.addEventListener("click", testimonialsModalFunc);
+
+// custom select variables
+const select = document.querySelector("[data-select]");
+const selectItems = document.querySelectorAll("[data-select-item]");
+const selectValue = document.querySelector("[data-selecct-value]");
+const filterBtn = document.querySelectorAll("[data-filter-btn]");
+
+select.addEventListener("click", function () {
+  elementToggleFunc(this);
+});
+
+// add event in all select items
+for (let i = 0; i < selectItems.length; i++) {
+  selectItems[i].addEventListener("click", function () {
+    let selectedValue = this.innerText.toLowerCase();
+    selectValue.innerText = this.innerText;
+    elementToggleFunc(select);
+    filterFunc(selectedValue);
+  });
+}
+
+// filter variables
+const filterItems = document.querySelectorAll("[data-filter-item]");
+
+const filterFunc = function (selectedValue) {
+  for (let i = 0; i < filterItems.length; i++) {
+    if (selectedValue === "all") {
+      filterItems[i].classList.add("active");
+    } else if (selectedValue === filterItems[i].dataset.category) {
+      filterItems[i].classList.add("active");
+    } else {
+      filterItems[i].classList.remove("active");
+    }
+  }
+};
+
+// add event in all filter button items for large screen
+let lastClickedBtn = filterBtn[0];
+
+for (let i = 0; i < filterBtn.length; i++) {
+  filterBtn[i].addEventListener("click", function () {
+    let selectedValue = this.innerText.toLowerCase();
+    selectValue.innerText = this.innerText;
+    filterFunc(selectedValue);
+
+    lastClickedBtn.classList.remove("active");
+    this.classList.add("active");
+    lastClickedBtn = this;
+  });
+}
+
+// contact form variables
+const form = document.querySelector("[data-form]");
+const formInputs = document.querySelectorAll("[data-form-input]");
+const formBtn = document.querySelector("[data-form-btn]");
+
+// add event to all form input field
+for (let i = 0; i < formInputs.length; i++) {
+  formInputs[i].addEventListener("input", function () {
+    // check form validation
+    if (form.checkValidity()) {
+      formBtn.removeAttribute("disabled");
+    } else {
+      formBtn.setAttribute("disabled", "");
+    }
+  });
+}
+
+// Helper: dynamically load a script and resolve when loaded
+function loadScript(src, timeout = 8000) {
+  return new Promise(function (resolve, reject) {
+    const s = document.createElement("script");
+    s.src = src;
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = (e) => reject(new Error("Failed to load " + src));
+    document.head.appendChild(s);
+    // timeout
+    setTimeout(
+      () => reject(new Error("Loading script timed out: " + src)),
+      timeout
+    );
+  });
+}
+
+// Ensure EmailJS SDK is available; try an alternate CDN if needed
+function ensureEmailJSSDK() {
+  return new Promise(function (resolve, reject) {
+    if (window.emailjs && typeof emailjs.send === "function") {
+      return resolve();
+    }
+
+    // Try loading from an alternate CDN (jsDelivr)
+    const fallbackSrc =
+      "https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js";
+    console.warn(
+      "EmailJS not present, attempting to load SDK from",
+      fallbackSrc
+    );
+    loadScript(fallbackSrc, 10000)
+      .then(() => {
+        if (window.emailjs && typeof emailjs.send === "function") {
+          console.log("Loaded EmailJS SDK from fallback CDN");
+          resolve();
+        } else {
+          reject(new Error("EmailJS loaded but api not available"));
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load EmailJS SDK fallback:", err);
+        reject(err);
+      });
+  });
+}
+
+// page navigation variables
+const navigationLinks = document.querySelectorAll("[data-nav-link]");
+const pages = document.querySelectorAll("[data-page]");
+
+// add event to all nav link
+for (let i = 0; i < navigationLinks.length; i++) {
+  navigationLinks[i].addEventListener("click", function () {
+    for (let i = 0; i < pages.length; i++) {
+      if (this.innerHTML.toLowerCase() === pages[i].dataset.page) {
+        pages[i].classList.add("active");
+        navigationLinks[i].classList.add("active");
+        window.scrollTo(0, 0);
+      } else {
+        pages[i].classList.remove("active");
+        navigationLinks[i].classList.remove("active");
+      }
+    }
+  });
+}
+
+// contact form submit: send email via EmailJS with mailto fallback
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  // disable button and show sending state
+  formBtn.setAttribute("disabled", "");
+  const originalBtnHtml = formBtn.innerHTML;
+  formBtn.innerHTML =
+    '<ion-icon name="paper-plane"></ion-icon><span>Sending...</span>';
+
+  const toEmail = "achyuttamang23@gmail.com"; // change if you want another recipient
+  const payload = {
+    from_name: form.fullname.value,
+    from_email: form.email.value,
+    message: form.message.value,
+    to_email: toEmail,
+  };
+
+  console.log("Contact form submit, payload:", payload);
+
+  // Quick mobile fallback: some mobile browsers block EmailJS or have network/OAuth issues.
+  // Detect mobile and open the user's mail client immediately as a reliable fallback.
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(
+    navigator.userAgent || ""
+  );
+  if (isMobile) {
+    const msgEl = document.querySelector("[data-form-message]");
+    if (msgEl) {
+      msgEl.style.display = "block";
+      msgEl.style.color = "#0c5460";
+      msgEl.style.background = "#d1ecf1";
+      msgEl.style.border = "1px solid #bee5eb";
+      msgEl.textContent = "Using your mail app on mobile for reliability.";
+    }
+    // small delay so user can see message then fallback to mailto
+    setTimeout(function () {
+      fallbackMailto();
+    }, 400);
+    return;
+  }
+
+  function restoreButton() {
+    formBtn.innerHTML = originalBtnHtml;
+    // keep button disabled until inputs changed (validation handler will re-enable)
+  }
+
+  function fallbackMailto() {
+    const subject = encodeURIComponent("Contact from " + payload.from_name);
+    const body = encodeURIComponent(
+      "From: " +
+        payload.from_name +
+        " <" +
+        payload.from_email +
+        ">\n\n" +
+        payload.message
+    );
+    window.location.href = `mailto:${toEmail}?subject=${subject}&body=${body}`;
+    restoreButton();
+    form.reset();
+  }
+
+  // Ensure EmailJS SDK is available (try loading fallback CDN if needed)
+  ensureEmailJSSDK()
+    .then(function () {
+      try {
+        const SERVICE_ID = "service_d03hp4n";
+        const TEMPLATE_ID = "template_mxexezt";
+        const PUBLIC_KEY = "Ti5UCuN3wpXfW_OeI"; // your EmailJS public key
+
+        const formMessage = document.querySelector("[data-form-message]");
+
+        function showMessage(type, text) {
+          if (!formMessage) {
+            alert(text);
+            return;
+          }
+          formMessage.style.display = "block";
+          formMessage.textContent = text;
+          formMessage.style.color = type === "success" ? "#155724" : "#721c24";
+          formMessage.style.background =
+            type === "success" ? "#d4edda" : "#f8d7da";
+          formMessage.style.border =
+            "1px solid " + (type === "success" ? "#c3e6cb" : "#f5c6cb");
+          setTimeout(function () {
+            formMessage.style.display = "none";
+          }, 6000);
+        }
+
+        if (PUBLIC_KEY) {
+          try {
+            emailjs.init(PUBLIC_KEY);
+            console.log("EmailJS initialized with public key");
+          } catch (initErr) {
+            console.error("emailjs.init error", initErr);
+          }
+        }
+
+        const sendPromise = emailjs.send(SERVICE_ID, TEMPLATE_ID, payload);
+
+        sendPromise.then(
+          function () {
+            console.log("EmailJS send resolved");
+            showMessage("success", "Message sent — thank you!");
+            restoreButton();
+            form.reset();
+          },
+          function (err) {
+            console.error("EmailJS error:", err);
+            const errText =
+              err && (err.text || err.statusText)
+                ? err.text || err.statusText
+                : "";
+            showMessage(
+              "error",
+              "Could not send via EmailJS — opening mail client. " + errText
+            );
+            setTimeout(fallbackMailto, 800);
+          }
+        );
+      } catch (err) {
+        console.error("Email send error:", err);
+        const msgEl = document.querySelector("[data-form-message]");
+        if (msgEl) {
+          msgEl.style.display = "block";
+          msgEl.style.color = "#721c24";
+          msgEl.style.background = "#f8d7da";
+          msgEl.style.border = "1px solid #f5c6cb";
+          msgEl.textContent =
+            "Unexpected error sending message — opening mail client.";
+        } else {
+          alert("Unexpected error sending message — opening mail client.");
+        }
+        setTimeout(fallbackMailto, 600);
+      }
+    })
+    .catch(function (err) {
+      console.warn("EmailJS SDK not available after attempt:", err);
+      const msgEl = document.querySelector("[data-form-message]");
+      if (msgEl) {
+        msgEl.style.display = "block";
+        msgEl.style.color = "#856404";
+        msgEl.style.background = "#fff3cd";
+        msgEl.style.border = "1px solid #ffeeba";
+        msgEl.textContent =
+          "Email service not available — opening your mail client.";
+      } else {
+        alert("Email service not available — opening your mail client.");
+      }
+      setTimeout(fallbackMailto, 600);
+    });
+});
